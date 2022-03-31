@@ -1,0 +1,68 @@
+Genus,Species,Species code,Family,author citation,synonym (APG III classification),is active name,is present on plots,is present in soil samples
+Amsinckia,intermedia,amin,Boraginaceae,Fisch. & C.A. Mey.,alternate: Amsinckia menziesii (Lehm.) A. Nelson & J.F. Macbr. var. intermedia (Fisch. & C.A. Mey.) Ganders,TRUE,TRUE,TRUE
+Astragalus,nuttallianus,asnu,Fabaceae,A. DC.,,TRUE,TRUE,FALSE
+Bowlesia,incana,boin,Apiaceae,Ruiz Lopez & Pavon,,TRUE,TRUE,TRUE
+Bromus,rubens,brru,Poaceae,L.,alternate: Bromus madritensis  L.  ssp. rubens  (L.) Husnot,TRUE,TRUE,TRUE
+Brassica,tournefortii,brto,Brassicaceae,Gouan,,TRUE,FALSE,TRUE
+Camissonia,chamaenerioides,cach,Onagraceae,(A. Gray) Raven,active: Eremothera chamaenerioides (A. Gray) W.L. Wagner & Hoch,FALSE,TRUE,TRUE
+Chorizanthe,brevicornu,chbr,Polygonaceae,Torrey,,TRUE,TRUE,TRUE
+Chorizanthe,rigida,chri,Polygonaceae,(Torrey) Torrey & A. Gray,,TRUE,TRUE,FALSE
+Chaenactis,stevioides,chst,Asteraceae,Hook. & Arn.,,TRUE,TRUE,TRUE
+Cistanthe,monandra,cimo,Portulacaceae,(Nutt.) Hershkovitz,alternate: Calyptridium monandrum,TRUE,TRUE,TRUE
+Cryptantha,angustifolia,cran,Boraginaceae,(Torrey) Greene,,TRUE,TRUE,TRUE
+Cryptantha,barbigera,crba,Boraginaceae,(A. Gray) Greene,,TRUE,TRUE,TRUE
+Crassula,connata,crco,Crassulaceae,Ruiz Lopez & Pavon,,TRUE,TRUE,FALSE
+Cryptantha,maritima,crma,Boraginaceae,(E. Greene) E. Greene,,TRUE,FALSE,TRUE
+Cryptantha,micrantha,crmi,Boraginaceae,(Torrey) I.M. Johnston,,TRUE,TRUE,TRUE
+Cryptantha,nevadensis,crne,Boraginaceae,A. Nelson & Kennedy,,TRUE,TRUE,TRUE
+Cryptantha,pterocarya,crpt,Boraginaceae,(Torrey)  Greene,,TRUE,TRUE,TRUE
+Daucus,pusillis,dapu,Apiaceae,Michx.,,TRUE,TRUE,TRUE
+Descurainia,pinnata,depi,Brassicaceae,(Walter) Britton,,TRUE,TRUE,TRUE
+Draba,cuneifolia,drcu,Brassicaceae,Torrey & A. Gray,,TRUE,TRUE,TRUE
+Eriogonum,abertianum,erab,Polygonaceae,Torr.,,TRUE,TRUE,FALSE
+Eragrostis,cilianensis,eracil,Poaceae,(All.) Vign. ex Janchen,,TRUE,FALSE,TRUE
+Erodium,cicutarium,erci,Geraniaceae,(L.) L'H-r.,,TRUE,TRUE,TRUE
+Eriogonum,deflexum,erde,Polygonaceae,Torr.,,TRUE,TRUE,TRUE
+Eriastrum,diffusum,erdi,Polemoniaceae,(A. Gray) H. Mason,,TRUE,TRUE,TRUE
+Eriophyllum,lanosum,erla,Asteraceae,(A. Gray) A. Gray,alternate: Antheropeas lanosum (A. Gray) Rydb.,TRUE,TRUE,TRUE
+Erodium,texanum,erte,Geraniaceae,A. Gray,,TRUE,TRUE,TRUE
+Eriogonum,trichopes,ertr,Polygonaceae,Torrey,,TRUE,TRUE,TRUE
+Eucrypta,chrysanthemifolia,euch,Boraginaceae,(Benth.) E. Greene,,TRUE,FALSE,FALSE
+Eucrypta,micrantha,eumi,Boraginaceae,(Torr.) A. Heller,,TRUE,TRUE,TRUE
+Evax,multicaulis,evmu,Asteraceae,DC.,active: Evax verna Raf. var. verna,FALSE,TRUE,TRUE
+Filago,arizonica,fiar,Asteraceae,A. Gray,active: Logfia arizonica (A. Gray) Holub,FALSE,TRUE,FALSE
+Filago,californica,fica,Asteraceae,Hook. & Arn.,active: Logfia filaginoides (Hook. & Arn.) Morefield,FALSE,TRUE,TRUE
+Filago,depressa,fide,Asteraceae,A. Gray,active: Logfia depressa (A. Gray) Holub,FALSE,TRUE,TRUE
+Gilia,stellata,gist,Polemoniaceae,A.A. Heller,,TRUE,TRUE,FALSE
+Guillenia,lasiophylla,gula,Brassicaceae,(Hook. & Arn.) E. Greene,active: Caulanthus lasiophyllus (Hook. & Arn.) Payson,FALSE,TRUE,TRUE
+Harpagonella,palmerii,hapa,Boraginaceae,A. Gray,,TRUE,TRUE,TRUE
+Herniaria,hirsuta,hehi,Caryophyllaceae,L.,alternate: Herniaria cinerea,TRUE,TRUE,TRUE
+Lappula,redowskii,lare,Boraginaceae,(Hornem.) E. Greene,active: Lappula occidentalis (S. Watson) Greene vars. cupulata (A. Gray) Higgins and redowskii (A. Gray) Higgins,FALSE,TRUE,TRUE
+Lesquerella,gordonii,lego,Brassicaceae,(A. Gray) S. Watson ,,TRUE,TRUE,TRUE
+Lepidium,lasiocarpum,lela,Brassicaceae,Nutt.,alternate: Lepidium lasiocarpum Torrey & A. Gray ssp. lasiocarpum,TRUE,TRUE,TRUE
+Linanthus,bigelovii,libi,Polemoniaceae,(A. Gray) E. Greene,alternate: Gilia bigelovii,TRUE,TRUE,FALSE
+Lotus,humistratus,lohu,Fabaceae,E. Greene,active: Acmispon brachycarpus (Benth.) D.D. Sokoloff,FALSE,TRUE,TRUE
+Loeflingia,squarrosa,losq,Caryophyllaceae,Nutt.,,TRUE,TRUE,FALSE
+Lotus,tomentellus,loto,Fabaceae,E. Greene,active: Acmispon strigosus (Nutt.) Greene var. tomentellus (Greene),FALSE,TRUE,TRUE
+Matthiola,parviflora,mapa,Brassicaceae,Kuntze,,TRUE,TRUE,TRUE
+Mentzelia,albicaulis,meal,Loasaceae,Hook.,,TRUE,TRUE,TRUE
+Monoptilon,bellioides,mobe,Asteraceae,(A. Gray) H.M. Hall,,TRUE,TRUE,TRUE
+Nemacladus,glanduliferus,negl,Campanulaceae,Jepson,,TRUE,TRUE,TRUE
+Oenothera,primiveris,oepr,Onagraceae,A. Gray,,TRUE,TRUE,FALSE
+Oligomeris,linifolia,olli,Resedaceae,(M. Vahl) J.F. Macbr.,,TRUE,FALSE,TRUE
+Pectocarya,heterocarpa,pehe,Boraginaceae,(I.M. Johnst.) I.M. Johnst.,,TRUE,TRUE,TRUE
+Pectocarya,platycarpa,pepl,Boraginaceae,(Munz & I.M. Johnst.)  Munz & I.M. Johnst.,,TRUE,TRUE,TRUE
+Pectocarya,recurvata,pere,Boraginaceae,I.M. Johnst.,,TRUE,TRUE,TRUE
+Phacelia,crenulata,phcr,Boraginaceae,Torrey,,TRUE,TRUE,TRUE
+Phacelia,distans,phdi,Boraginaceae,Benth.,,TRUE,TRUE,TRUE
+Plagiobothrys,arizonicus,plar,Boraginaceae,(A. Gray) A. Gray,,TRUE,TRUE,FALSE
+Plantago,insularis,plin,Plantaginaceae,Eastw.,active: Plantago ovata Forsskal var insularis (Eastw.) S.C. Meyers & A. Liston,FALSE,TRUE,TRUE
+Plantago,patagonica,plpa,Plantaginaceae,Jacq.,,TRUE,TRUE,TRUE
+Poa,bigelovii,pobi,Poaceae,Vasey & Scribner,,TRUE,TRUE,TRUE
+Schismus,barbatus,scba,Poaceae,(Loefl. ex L.) Thell.,,TRUE,TRUE,TRUE
+Silene,antirrhina,sian,Caryophyllaceae,L.,,TRUE,TRUE,TRUE
+Sisymbrium,irio,siir,Brassicaceae,L.,,TRUE,TRUE,TRUE
+Spermolepis,echinata,spec,Apiaceae,(Nutt. ex DC.) A. Heller,,TRUE,TRUE,TRUE
+Streptanthus,carinatus,stca,Brassicaceae,C. Wright ex A. Gray,,TRUE,FALSE,TRUE
+Stylocline,micropoides,stmi,Asteraceae,A. Gray,,TRUE,TRUE,TRUE
+Vulpia,octoflora,vuoc,Poaceae,(Walter) Rydb.,active: Festuca octoflora Walter,FALSE,TRUE,TRUE

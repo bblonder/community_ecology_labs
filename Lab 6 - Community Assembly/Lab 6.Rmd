@@ -1,0 +1,200 @@
+---
+title: "BIO 423 - Lab 6"
+author: "Benjamin Blonder"
+date: "Spring 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Learning outcomes
+Content goals:
+
+* Understand how species competition in generalized Lotka-Volterra models predicts community assembly
+* Visualize and summarize predictions of neutral community assembly models
+* Assess the role of chance and competition in community assembly via null model and co-occurrence analysis
+
+# Generalized Lotka-Volterra competition as a driver of community assembly
+The generalized Lotka-Volterra model extends our two-species competition models to $S$ species:
+
+$$\frac{dN_i}{dt} =   r_i N_i + \sum_{j=1}^S \alpha_{ij}N_i N_j  $$
+
+where $N_i$ is the abundance of species $i$, $r_i$ is the intrinsic growth rate of species $i$ and $\alpha_{ij}$ is the competition coefficient between species $i$ and $j$. This equation can also be summarized in matrix form as
+
+$$\frac{d\textbf{N}}{dt} = \textbf{N}(\textbf{r}+\textbf{A}\textbf{N})$$
+where $\textbf{N}$ is the vector of abundances, $\textbf{r}$ the vector of growth rates, and $\textbf{A}$ the matrix of competition coefficients (note that $A_{ii} = \alpha_{ii}$ is the intraspecific competition coefficient).
+
+We can use this model to predict how multiple species compete with each other. You will recall in a past lab we simulated the dynamics of the differential equation using Euler integration. This week, for more accuracy, and because our learning goals are elsewhere, we will use some off-the-shelf code to do the integration for us from the `deSolve` package.
+
+We will first begin by investigating a scenario where species have randomly chosen growth rates and competition coefficients.
+
+```{r glv}
+library(primer)
+library(deSolve)
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+
+# set the random number generator state 
+# so that our random numbers come out the same each time
+set.seed(1)
+
+# set the number of species
+S = 3
+
+# choose a random set of intrinsic growth rates 
+# uniformly distributed from 0.8 to 1.2
+r = rep(1, times=S)
+print(r)
+
+# choose competition coefficients normally distributed
+# with a mean of 0.05 and a standard deviation of 0.01
+A = matrix(rnorm(n=S*S,mean=0.05,sd=0.01),nrow=S,ncol=S)
+print(A)
+
+# set the initial abundances of all species to 20
+N0 = rep(20, times=S)
+
+# specify the times over which we do the simulation
+# here from t=0 to t=1000
+time = seq(0, 1000, by=0.1)
+
+# run the simulation (the actual math of the Lotka-Volterra
+# equations is hidden in the lvcompg variable, which is 
+# loaded from the 'primer' package
+lv_out <- ode(y=N0, times=time, func=lvcompg, parms=list(r,A))
+lv_out_for_plotting = melt(as.data.frame(lv_out),id.vars="time")
+
+# plot the time series, with labels 1-2-3 for each species
+ggplot(lv_out_for_plotting,aes(x=time,y=value,col=variable)) + 
+  geom_line() + theme_classic() + 
+  xlab("Time") + ylab("Number of individuals")
+```
+
+# Questions
+1. In the example above, how many species stably coexist with each other?  
+2. Look again at the values in $\textbf{r}$ and $\textbf{A}$. Is it possible to easily infer why one species goes extinct based on individual competition coefficients in the matrix? Why not?
+3. Repeat the above analysis but set `S=5` (i.e. five species). Re-run the code from the first section, including the `set.seed(1)` command (this will ensure everyone in the class gets the same answer). What dynamics do you observe now? Can you explain the transient population cycles you see on the basis of competition? What is the final outcome of the community assembly process? Include a graph of the population dynamics.
+4. One idea in community assembly / coexistence theory is that coexistence is possible when intraspecific competition exceeds interspecific competition. Let's see what this does in our model. You can increase intraspecific competition by making the $\alpha_{ii}$ values a big larger (say, three times larger). This is equivalent in R to increasing the main-diagonal values of the $A$ matrix. Let's test this by making a new competition coefficient matrix for the 5-species simulation: `A_new = A` and then `diag(A_new)=3*diag(A_new)`. Re-run the simulation with the new matrix. How many species coexist now in the `S=5` case? Does this simulation result support the hypothesis? Include a graph of the population dynamics.
+
+# Optional questions for graduate students
+* Can you find the equilibrium state ($N^e$) of the model? Use linear algebra to solve $\frac{d\textbf{N}}{dt}=0$.
+* Can you design a matrix $\textbf{A}$ such that stability (i.e. coexistence of all species) will occur? Hint, this will occur if the largest eigenvalue of the $\textbf{A}$ matrix is real and negative. Use an eigendecomposition of a matrix to pick eigenvectors and eigenvalues consistent with this viewpoint.
+* How does the number of species that stably coexist vary with the initial number of species, and with the strength of competition? Make some analyses assuming that interactions are randomly distributed amongst species. You will need to run multiple replicates due to the randomness in the competition strengths in each model run. 
+* The May-Wigner theorem (see `http://homepages.ulb.ac.be/~dgonze/LEUVEN2017/practicals_sol.html`) suggests that stable coexistence is most likely in random block-connected matrices (where $\alpha_{ij}$ is normally distributed about zero) when competition and block connectance are very low. Vary the parameters in your simulation above to see if you can confirm this theoretical prediction.
+* Explore other cases for $A$, e.g. some species with mutualistic interactions (negative $\alpha_{ij}$). What outcomes do you get for community assembly?
+
+# Neutral community dynamics
+The above analyses have shown you how competition can structure the abundance of species over time. An alternative perspective on community assembly is neutral dynamics, where species have no differences in competitive ability, but rather increase or decrease in abundance by chance. The underlying model can be thought of as a process where patches on a landscape can either have no individuals, or a single individual. When an individual dies (at random, regardless of species) the patch can be colonized by reproduction from a nearby individual (at random, regardless of species) or from immigration from outside the community. Thus species' abundances 'drift' over time. This model is the key contribution of Steve Hubbell's 'unified neutral theory of biodiversity'.
+
+This model can be implemented in R in the `untb` package.
+
+```{r neutral, results='hide'}
+library(untb) # you will need to install the package
+data(butterflies)
+# for a 10x10 grid
+display.untb(start=1:10^2,prob.of.mutate=0, gens=200, ask=TRUE)
+# each colored dot is an individual of a different species
+# hit return repeatedly to watch the dynamics
+```
+
+We can also simulate changes in abundance over time in a neutral model.
+
+```{r neutraltime}
+# set random number generator state
+set.seed(1)
+# run the simulation
+results_untb_sim = untb(start=rep(1,60), # start with one species at abundance=60
+                        prob=0.002, # probability of reproduction not arising from a resident species
+                        gens=50000, # number of time steps
+                        D=1, # number of indivs that die each time step
+                        keep=TRUE) # instruction to keep every time step of output
+# convert to abundances over time
+untb_predictions = data.frame(species.table(results_untb_sim))
+# label species columns
+names(untb_predictions) = paste("Species",1:ncol(untb_predictions))
+# add a time column
+untb_predictions$time = 1:nrow(untb_predictions)
+# transform output for plotting
+untb_predictions_for_plotting = melt(untb_predictions, id.vars='time')
+
+# make a plot
+ggplot(untb_predictions_for_plotting,aes(x=time,y=value,col=variable)) +
+  geom_line() + 
+  xlab("Time") + ylab("Abundance") +
+  facet_wrap(~variable) +
+  theme_classic()
+
+# count the community richness over time
+# do this by converting abundance to presence/absence (x>0)
+# and then counting sums of presences at each time
+richness_untb = data.frame(time=untb_predictions$time, 
+                      species_richness=rowSums(untb_predictions[,1:(ncol(untb_predictions)-1)] > 0)
+                      )
+
+# plot richness over time
+ggplot(richness_untb,aes(x=time,y=species_richness)) + 
+  geom_line() + 
+  xlab("Time") + ylab("Richness") +
+  theme_classic()
+```
+
+# Questions
+5. Give a 1-2 sentence explanation for why some species start at zero abundance, reach low abundance, and then disappear again.
+6. Species 1 and Species 3 have negatively correlated abundances: when 1 is common, 3 is rare, and vice versa. Are these species competing? Can competition be inferred from observational time-series?
+7. Species 1 appears to be the winner: after a long time period, it is the most common. How long do you have to run the model until Species 1 goes locally extinct? In a neutral model, do any species stably exist (or co-exist?)
+8. How many species are resident in the community per time on average in the original simulation? Report a mean +/- standard deviation for each case.
+9. Describe a type of real community where you think neutral dynamics could be occurring.
+
+# Optional questions for graduate students
+* Generate a rank-abundance distribution from the neutral model (hint: see the demo for the `untb` R package). Estimate the fundamental biodiversity number arising from neutral theory for this distribution. Is it consistent with the model's parameters? What happens if you take the community far from equilibrium, e.g. by modeling a very high mortality rate?
+* Re-load the community composition data from the Gentry transects. Compare the neutral prediction for the rank abundance distribution with the observed values. Also estimate the fundamental biodiversity number in each. How many of these assemblages are consistent with neutral assembly processes?
+
+
+
+# Chance vs. competition
+A standard way of determining whether chance (more broadly than neutral dynamics) structures assembly processes is to determine whether observed species co-occurrence patterns across multiple communities are random or not. To do so, we can see whether species co-occur with each other more or less than expected. 
+
+The standard unit of analysis in this is a community matrix, which has $m$ rows (corresponding to species) and $n$ rows (corresponding to sites). Each matrix entry is the presence/absence or the abundance of that species. 
+
+Let's look at a quick example. We will load data for occurrences of West Indian finches (Fringillidae) on one of 19 major islands in the West Indies. Data are from Gotelli and Abele (1982).
+
+```{r ecosim}
+library(EcoSimR)
+
+data(dataWiFinches)
+
+m_finch = cooc_null_model(dataWiFinches, 
+                          algo='sim9', 
+                          metric='c_score', 
+                          suppressProg=TRUE,
+                          nReps=1000)
+
+plot(m_finch, type='cooc')
+```
+
+What is going on here? You can see a visualization of the species x site matrix on the right (red), and a randomized matrix (blue) on the left. What does random mean? Here, the randomization is determined using the `sim9` algorithm, which swaps rows and column entries in the matrix, preserving row and column totals. This is effectively an algorithm that re-allocates individuals among islands while maintaining abundance and richness across sites. You could imagine other algorithms (e.g. re-assigning individuals, but allowing richness to vary). There are a lot of computational and statistical issues here - check out the `EcoSimR` help pages to learn more if you are curious.
+
+The important message here is that there are multiple possible 'null expectation's for what 'random' means in community assembly - and only the scientist will be able to determine what the right choice should be. For now we'll assume that preserving abundance and richness is reasonable, and continue with the individual-swapping.
+
+To determine if the overall patterns of co-occurrence are meaningful, we need to summarize them. A classic statistic is the C-score of Stone & Roberts (1990), which is an update of the checkerboard index proposed by Diamond (1975). The C-score is calculated for each species pair as $$C_{ij} = (R_i - S)(R_j - S)$$ where $R_i$ and $R_j$ are the row sums for species $i$ and $j$, and $S$ is the number of shared sites in which both species $i$ and species $j$ are present. For any particular species pair, the larger the C-score, the more segregated the pair, with fewer shared sites. This was implemented in the above model using the `c_score` function.
+
+We can then summarize the overall level of randomness in the data by comparing the observed value of the C-score to the distribution of values of the C-score in many replicates of the random assembly / null-modeling process (above, `nReps=1000`). If the observed value is within the center of the null distribution, then we infer that the community could have been assembled by chance; if the observed value is far outside, then we infer that other assembly processes are necessary to explain the observed distribution of species.
+
+In the below plot, the null distribution is shown as the blue histogram; the observed value as a red vertical line. The dashed vertical black lines show the one- or two-tailed 95% quantiles of the null distribution.
+
+```{r show}
+plot(m_finch, type='hist')
+summary(m_finch)
+```
+
+# Questions
+10. Based on the graph and above summary, is this set of finch communities structured by random assembly processes? If not, what other processes could possibly be at play?
+
+# What to hand in
+* A single Word Document including:
+    + written answers (1-2 sentences) and figures for each question above
+    + A copy of your R script (the contents of your `.R` file pasted into the Word document)
+    + Author contribution statement

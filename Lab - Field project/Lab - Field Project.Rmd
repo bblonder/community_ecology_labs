@@ -1,0 +1,179 @@
+---
+title: "BIO 423 - Lab 1"
+author: "Benjamin Blonder"
+date: "Spring 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Learning outcomes
+R goals:
+
+* map data using shapefile base maps
+* clean datasets by assessing column types, outlier values, and transcription errors
+
+Content goals:
+
+* test luxury hypothesis for plant biodiversity in urban environments
+* assess species-area relationships in urban systems
+
+## Data cleaning
+Before we can start working with our class dataset, we need to read in and clean the data. It is very likely that there are various errors in the data that will need to be fixed before we can use it for quantitative analyses. The best way to do this is to:
+
+1. Download the data from Google Drive as `CSV` format (comma-separated values) and put it in the same folder as your working directory and your analysis script. You can do this from the menu item `File > Download As > Comma separated values`.
+2. Load the data into R (instructions below).
+3. Check for errors using R (instructions below).
+4. Fix any errors in the Google Drive version.
+5. Return to step 1 until no errors remain.
+
+## Load in the data
+First, let's read in the data:
+
+```{r readindata}
+# the below line assumes that you have downloaded a copy of the data!
+data = read.csv("BIO 423 Spring 2019 Field Data - Sheet1.csv")
+
+# check out column names
+names(data)
+```
+
+## Column class errors
+The first thing we need to do is check for errors in the column classes. All of the columns besides `Group.members` and `Property.address` should have column class either `'int'` or `'num'` reflecting that they are either integers (e.g. the yard type) or numeric (e.g. property lot size). You can see the column type to the right of the column name using the `str` function.
+
+```{r checktypes}
+str(data)
+```
+
+If you see any data with the wrong class, your next step would be to investigate why. Common errors include:
+- including non-numeric values (e.g. marginal notes like `"34 (wrong)"`)
+- adding extra columns or dots (e.g. `"33.19.2"` instead of `33.192`)
+- adding extra spaces (e.g. `"33.2 "` instead of `33.2`)
+- adding extra commas (e.g. `"9,342"` instead of `9342`)
+- adding extra symbols (e.g `"$340"` instead of `340`)
+
+You may also need to force Google Sheets to format columns as numeric, rather than as text.
+
+## Range errors
+Once you have resolved the column class issues, the next thing to check is that the data have a reasonable range of values. For example, we know that measurements of body mass must be non-negative, and we can imagine that if those body mass estimates were for insects, values over 1 kilogram are probably erroneous. These errors are easy to check for in R using functions you already know:
+
+The easiest way is to simply run a summary and look for the min/mean/max values - then decide if they are realistic:
+```{r summarize}
+summary(data)
+```
+
+Once you have identified columns where there are likely errors, you need to determine which rows are the problematic ones. We can do this using the `which` functionality for subsetting that you already know:
+
+```{r checkrange}
+# we know that the yard types should range from 1 to 5 -
+# find out of range values
+data[which(data$Yard.type..xeriscaped.1.lawn.5. < 1),]
+data[which(data$Yard.type..xeriscaped.1.lawn.5. > 5),]
+```
+
+Any results that give non-empty results represent errors you need to fix on Google Drive. You should check for errors not just in the xeriscaped column, but also in all the others. For example, you might want to ensure that the latitude and longitude values are reasonable (check especially for sign errors - longitudes in Phoenix should be somewhere around -111°, not 111°). I recommend that we divide this work up among groups in the class, as everyone will ultimately use the same cleaned dataset together.
+
+## Working with the clean data
+Once you have clean data, you can begin to make some sceintific analyses. To help illustrate this, let's work with a 'fake' version of the data - a subset of the whole dataset that I have cleaned for you. You don't need to use these data yourself, but you can look at this code to help you with your analyses for the class.
+
+```{r loadfake}
+data_fake = read.csv('clean data subset.csv')
+str(data_fake)
+```
+
+First, let's load in some libraries you will find helpful. If these don't load, make sure to install them.
+
+```{r loadlibraries}
+library(raster)
+library(rgeos)
+library(rgdal)
+library(maptools)
+library(ggplot2)
+library(RColorBrewer)
+library(dplyr)
+```
+
+Second, let's load in some spatial data showing the layout of cities in Phoenix. You should download the  `tl_2016_04_place.zip` file and extract it into a folder called `tl_2016_04_place` in the same directory as this R script (i.e. your working directory).
+
+```{r basemap}
+# load in census data for places and roads
+places <- shapefile('tl_2016_04_place/tl_2016_04_place.shp')
+places@data$id = rownames(places@data)
+places.points = fortify(places, region="id")
+places.df = inner_join(places.points, places@data, by="id")
+# add or delete place-names as desired below to change map extent
+places.df = places.df[places.df$NAME %in%
+              c("Phoenix","Tempe","Gilbert",
+                "Chandler","Mesa","Guadalupe",
+                "Scottsdale","Fountain Hills",
+                "Paradise Valley"),] 
+```
+
+Now we can make a map illustrating certain data columns by coloring points.
+
+```{r drawmap}
+# set up a base map
+map_base = ggplot(places.df) + 
+  theme_classic() +
+  aes(long,lat,group=group) + 
+  geom_polygon(fill=NA,col='gray') +
+  coord_cartesian(xlim=c(-112.2,-111.6)) # you can change these values, or add ylim= to zoom in
+
+# make a map including the base map and the layer we care about (say, yard type)
+map_yardtype = map_base + 
+	geom_point(data= data_fake, # change this to your real data eventually!
+	           mapping=aes(
+		            x=Longitude..decimal.degrees.,
+		            y=Latitude..decimal.degrees.,
+		            group=NULL,
+		            col= Yard.type..xeriscaped.1.lawn.5.)) + # change to your variable eventually!
+	scale_color_gradientn(colors = brewer.pal(9,"Spectral"))
+
+# plot the map
+map_yardtype
+```
+
+Here also is an example multiple regression. To make a model of $z ~ x + y$ where $z$ is the dependent variable, and $x$ and $y$ are two independent variables, you can write `lm(z~x+y,data=mydataframe)`
+```{r multreg}
+model_yardtype_propertyvalue_propertysize  = 
+  lm(Yard.type..xeriscaped.1.lawn.5. ~ 
+       Property.value.Zestimate.... + Property.lot.size..site.area...ft2.,
+      data=data_fake)
+
+summary(model_yardtype_propertyvalue_propertysize)
+confint(model_yardtype_propertyvalue_propertysize)
+# here in this demo the overall model p-value is 0.07, so the result is not significant
+# and the explained variation is high (0.99) primarily due the low number of data points
+# and the estimate fo the independent effect of property value is negative
+# and the estimate for the independent effect of property lot size is positive.
+```
+
+# What to do next
+Analyze the real clean data from the class to answer the following questions (same as in syllabus):
+
+1. What is the distribution of alpha diversity (species richness) across all sites? What about for each of trees, shrubs, and succulents? Summarize with mean, standard deviation, minimum, and maximum. (Hint: you need to make a new column for total species richness)
+2. How does species richness (for all species types together) change with property size? Construct a species-area relationship (SAR). You can try log-transforming x- or y- axes depending on the model you think is relevant. Report regression coefficients (with 95% confidence intervals), model $R^2$, and model p-value. (Hint: use `lm`, then use `confint` and `summary`)
+3. Does species richness increase with increasing property value? How does yard type influence species richness? Report regression coefficients (with 95% confidence intervals), model $R^2$, and model p-value. (Hint: use `lm` again)
+4. Is the hypothesis that plant diversity is higher where property values are high supported by your data? Over what spatial and temporal scales is your conclusion likely to be valid?
+5. Are there aspects of the data collection or analysis procedure that could have biased or influenced your conclusion? For example, the sampling methods, the species naming methods, the statistical approaches used, etc.
+6. What other factors might influence species diversity in urban environments? You can speculate based on your field experience, or cite evidence from the primary literature you read (either papers I provided, or that you found on your own).
+7. How do your findings compare to the results reported in the published studies you read as background for this project?
+8. Based on your findings, do you personally think that urban biodiversity is equitably distributed among rich and poor people in the Phoenix area?
+
+Write a report with short (1-paragraph) answers to each of the above questions, summarizing your findings.The final report should be single-spaced, 12 pt font, 1” margins. It will probably require approximately 3 pages but may be longer if figures/graphs are included. Graduate students may include more sophisticated analyses, e.g. spatial analyses, testing for interactions between predictor variables or pairing data to other public socioeconomic datasets. The R script you used should be included, pasted as an appendix on the last page of the report. As before, you should also include an author contribution statement.
+
+# Optional questions for graduate students
+* Is there a significant interaction between property size and property value, or with yard type, in models of species richness? How strong is it, and in which direction does it operate?
+* What SAR model best fits the data - power law, logistic, log, etc? (use `AIC` to compare different models in the `mmSAR` package)
+* Do results vary between different cities in the Phoenix metro area? (You will need to use `%over%` to classify points into city polygons, or you can do this manually in the datasheet)
+* Are the property values obtained for this dataset representative of the overall income levels in the region? You can download median household income by census tract data from
+
+`https://census.gov/data/data-tools.html` 
+
+and shapefiles from 
+
+`https://www.census.gov/geo/maps-data/data/cbf/cbf_tracts.html`
+
+You will probably have to classify points into census tracts using `%over%` and then use `inner_join` to merge against income data. 

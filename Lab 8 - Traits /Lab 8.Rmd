@@ -1,0 +1,171 @@
+---
+title: "BIO 423 - Lab 8"
+author: "Benjamin Blonder"
+date: "Spring 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Learning outcomes
+Content goals:
+  
+* Summarize trait variation across sites
+* Determine how environmental variation drives trait variation
+  
+R goals:
+
+* Become more familiar with `tidyverse` functions
+* Become more familiar with join operations
+* Make predictions using linear models
+
+This week we will learn how to work with trait-environment relationships, a key foundation of functional ecology. Our datasets will come from the Smithsonian Tropical Research Institute's Barro Colorado Island (BCI), a site that has been intensively studied for many years. On BCI there is a 50-hectare forest plot in which all individual plant stems are censused. This plot is divided up into 50 1-hectare subplots. We will be working with these data pre-summarized at subplot level for a single year's census.
+
+We will also be working with spatial data for environmental variation across the subplots - both physiographic factors such as elevation, slope, and aspect, as well as soil mineral factors such as the concentration of various trace elements, as well as soil pH. 
+
+We will be seeking to understand how the environment predicts the functionining and identity of species on the island. 
+
+Data come from:
+
+`http://www.sciencemag.org/cgi/content/full/295/5555/666/DC1`
+
+`https://datadryad.org/handle/10255/dryad.81868`
+
+`https://www.davidzeleny.net/anadat-r/doku.php/en:data:bci`
+
+and are encapsulated also in the `vegan` and `BiodiversityR` packages.
+
+# Loading in the census data
+```{r loadcensus}
+library(vegan)
+library(tidyverse)
+library(ggplot2)
+        
+# load the BCI data built-in from the vegan package
+data(BCI)
+BCI$Plot=as.numeric(row.names(BCI))
+# note that the data are in 'wide' format (site x species matrix)
+dim(BCI)
+
+# convert the data from long to short format
+BCI_short = BCI %>% 
+              gather(key="Species",value="Abundance",-Plot)
+# or using the reshape2 package (load it first), equivalently...
+# BCI_short = melt(BCI, id.vars="Plot", variable.name="Species",value.name="Abundance")
+
+head(BCI_short)
+
+# keep only species with non-zero abundance, and reorder for clarity
+BCI_short_nonzero = BCI_short %>% filter(Abundance>0) %>% arrange(Plot, Species)
+
+head(BCI_short_nonzero)
+```
+
+# Load in trait data
+To summarize data at community level, we can consider calculating community-weighted means (CWM) of traits. These can be represented as
+
+\[ CWM_t = \frac{\sum_i^n t_i N_i}{ \sum_i^n N_i } \]
+where $t_i$ is the value of trait $t$ for species $i$ and $N_i$ is the abundance of species $i$.
+
+Such metrics bring the mean trait value closer to that of the most common species, and are useful for summarizing the functional properties of the overall community.
+
+To calculate these, we will need to join the trait data with the by-site abundance data - look out for how this is done below!
+
+```{r loadtrait}
+traits = read.csv("BCI.trait.csv")
+str(traits)
+
+# create a Species column to match the Species column in BCI_short_nonzero
+
+# this requires changing underscores to periods
+# the fixed=TRUE argument means the substitution will interpret the 
+# find/replace exactly, rather than interpreting them as 'regular expressions'
+# which allow matching of more complex patterns (e.g. all numbers, all spaces)
+traits$Species = gsub("_",".",traits$genus_species,fixed=TRUE)
+
+# now join the trait data and the abundance data
+# we use inner join to keep only cases where species and traits are matched
+BCI_merged = inner_join(BCI_short_nonzero, traits,by="Species")
+
+# calculate community weighted means
+BCI_summary_trait = BCI_merged %>% 
+                      group_by(Plot) %>%
+                      summarize(CWM.seed.mass=
+                                  sum(SEED_DRY*Abundance,na.rm=T)/sum(Abundance,na.rm=T)
+                                )
+
+```
+
+# Load environmental data
+```{r loadenv}
+
+# load environmental data as a tab-separated file
+BCI.env = read.csv('BCI.env.txt',sep='\t')
+BCI.env$Plot = as.numeric(row.names(BCI.env))
+# also add in soil data
+BCI.soil = read.csv('BCI.soil.txt', sep='\t')
+BCI.soil$Plot = as.numeric(row.names(BCI.soil))
+# make a combined environmental dataset
+BCI_env_combined = inner_join(BCI.env,BCI.soil,by="Plot")
+head(BCI_env_combined)
+
+
+```
+
+# Begin analyses
+We now have several datasets: `BCI_env_combined`, which contains information on the abiotic environment and the spatial locations of subplots 1-50, as well as `BCI_summary_trait`, which contains information on CWM trait values for subplots 1-50, as well as the raw abundance and trait datasets. 
+
+We can now make a combined trait-environment dataframe, the heart of the work that will come:
+```{r joinup}
+BCI_summary_trait_env = inner_join(BCI_summary_trait, BCI_env_combined, by="Plot")
+str(BCI_summary_trait_env)
+```
+
+To illustrate what we can do with these data, let's make a few quick maps - one of a trait, one of an environmental variable.
+```{r makemap}
+ggplot(BCI_summary_trait_env,aes(x=x,y=y,col=CWM.seed.mass)) +
+  geom_point(size=5)+
+  coord_equal()+
+  scale_color_gradient(low = "red",high="blue") + 
+  theme_bw()
+
+
+ggplot(BCI_summary_trait_env,aes(x=x,y=y,col=pH)) +
+  geom_point(size=5)+
+  coord_equal()+
+  scale_color_gradient(low = "orange",high="green") + 
+  theme_bw()
+```
+
+
+
+# Questions
+1. Which species has the highest trait value for seed mass? Look up the species and include a photograph of this species' seed.
+
+2. Make a map of CWM shade leaf toughness. At what coordinates is toughness highest?
+
+3. Which of the soil trace minerals boron or phosphorus has the strongest effect on shade leaf vein toughness? Use a linear regression and explain how you decided what you meant by 'strongest effect'. Write a one sentence plain-English summary explaining the effect of this element on the trait values.
+
+4. Suppose there is some local erosion and one of the subplots reaches a slope of 15 degrees. What do you predict the CWM seed mass would become? You should build a linear model, then either use `predict(mymodel, data.frame(myvariable=newvalue))` or extract the coefficients of a linear model using `coef` and do the calculation by hand using slope-intercept form.
+
+5. What if there is a landslide and the slope reaches 25 degrees - what CWM seed mass do you predict? If this is an unrealistic prediction, explain why, and suggest (but do not implement) a strategy for how you could make a better model.
+
+6. Consider the 15 degree slope case again. How many species in the total species pool have seed mass values below the mean prediction? What fraction of the total number of species (with trait measurements) is this? (Hint: use `filter(!is.na(SEED_DRY))`)
+
+7. Use your answer to the previous question to explain how environmental filtering may influence community assembly at this site, in 2-3 sentences.
+
+
+# Optional questions for graduate students
+* Do a principal components analysis to determine the leading axis of soil variation across the plot. How much of this variation is explained by elevation or slope?
+* Repeat the trait analyses in question 3 and 4 but correcting for spatial autocorrelation, e.g. with generalized least squares regression (hint, use `gls` and `corClasses`).
+* Calculate functional richness in each plot, e.g. using the `convhulln` function in the `geometry` package. You may want to rescale the trait data using `scale` first in order to make variables with different units/scales comparable to each other. Then determine which plot has the highest functional richness, and whether topographic factors are drivers of richness.
+* Determine whether the observed functional richness in each plot is significantly higher or lower than expected by chance if species are randomly assembled from the species pool. You'll have to decide how to best make the null model - should you fix the total abundance of individuals? Species? Once you do the analysis, interpret the findings in terms of ecological processes (Hint: read Mayfield & Levine 2010 in Ecology Letters first).
+
+# What to hand in
+* A single Word Document including:
++ written answers (1-2 sentences) and figures for each question above
++ A copy of your R script (the contents of your `.R` file pasted into the Word document)
++ Author contribution statement

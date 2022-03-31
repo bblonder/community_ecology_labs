@@ -1,0 +1,200 @@
+---
+title: "BIO 423 - Lab 1"
+author: "Benjamin Blonder"
+date: "Spring 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Learning outcomes
+* Become familiar with R/Rstudio programming environment
+* Create scripts
+* Load in data
+* Create and manipulate data frames
+* Extract summary statistics from data subsets (e.g. means)
+
+## Basics of writing scripts
+```{r writing_comments}
+# lines with # are 'commented out' and do not run
+
+# we can do arithmetic
+3+4
+
+# spaces don't matter
+3 +     4
+```
+
+## Using basic functions
+```{r basic_functions}
+# we can evaluate simple mathematical functions
+sqrt(3^2+4^2)
+
+# evaluation is inside-out, just like in regular mathematics
+# all the below statements evaluate to the same value
+sqrt(40+(4*6))
+sqrt(40+(24))
+sqrt(64)
+8
+
+# to get help with any function, use the ? command
+?sqrt
+
+# functions have one or more named 'arguments' that take 'values'
+# here the two arguments are x and digits, with values 3.982523 and 2 respectively
+?round # round a number to a requested precision
+round(x=3.982523,digits=2)
+```
+
+## Data types
+```{r data_types}
+# we can work with 'vectors' of numbers
+sqrt(c(4,9,16))
+
+# we can 'assign' variable names
+x = c(30,57,12)
+print(x)
+z = sum(x)
+print(z)
+
+# we can use 'data frames' to store tables of values
+mydataframe = data.frame(firstVariable=c("a","b","c"),secondVariable=c(10,20,30))
+print(mydataframe)
+
+# data frame entries (and matrix entries) are accessed with either $ for columns
+# or [,] for rows/columns
+# the following two lines are equivalent
+mydataframe$secondVariable
+mydataframe[,"secondVariable"]
+```
+
+## Accessing and assigning variables
+```{r accessing_assigning}
+# equals sign 'assigns' the right-side to the left-side
+# double equals 'tests'
+a = 3
+print(a)
+a == 4
+a == 3
+
+# we can 'index' to access elements of a vector with []
+myVector = c(100, 64, 39.5, 11.1341)
+print(myVector[3])
+print(myVector[4])
+
+# we can also use these indexed values in other functions
+sqrt(myVector[2])
+```
+
+## Order matters
+```{r ordering_lines}
+# the order that lines are evaluated is very important
+# R starts at the top of a file and follows instructions
+# sequentially on below lines
+
+# note the difference in output between this block...
+x = 3
+x = x^2
+x = x+10
+print(x)
+
+# and this block...
+x = 3
+x = x+10
+x = x^2
+print(x)
+```
+
+## Using functions
+```{r calling_functions}
+desert_species = data.frame(
+  species=c("javelina","coati","rattlesnake","horned lizard","gila monster","black bear"),
+  is.mammal=c(TRUE,TRUE,FALSE,FALSE,FALSE,TRUE),
+  length.meters=c(0.5,0.4,1,0.1,0.3,2))
+print(mydataframe)
+
+# subsetting data is possible using row indexing
+desert_species_mammals = desert_species[desert_species$is.mammal==TRUE,]
+print(desert_species_mammals)
+
+desert_species_nonmammals = desert_species[desert_species$is.mammal==FALSE,]
+print(desert_species_nonmammals)
+
+# functions can be used on different parts of a data frame
+mean(desert_species_mammals$length.meters)
+mean(desert_species_nonmammals$length.meters)
+
+# the below block is equivalent to the above block
+mean(desert_species_mammals[,"length.meters"])
+mean(desert_species_nonmammals[,"length.meters"])
+
+# R provides some functionality to apply functions across data subsets
+# saving you the trouble of making your own subsets
+?tapply
+mean.lengths = tapply(X=desert_species$length.meters, INDEX=desert_species$is.mammal, FUN=mean)
+print(mean.lengths)
+```
+
+# Questions
+1. Create a data frame storing the name, gender, and height (in cm) of each person in your group.
+2. Calculate the mean height of each gender in your group (hint, use the `tapply` function).
+3. Calculate the total height of all people in your group (hint, use the `sum` function)
+
+
+# Applying your skills
+We will explore how insect populations are changing over time using data from a study that recently got wide media coverage. Our data come from Hallmann et al. PLoS One (2017), who studied insect biodiversity trends in German protected areas over the last several decades. 
+
+`https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0185809`
+
+We will estimate the changes in biomass using their raw data. 
+
+## Loading in the data
+```{r dataload}
+library(ggplot2) # if you get an error, install this package
+# via the Tools > Install Packages menu.
+
+# load in comma-separated-value format data
+# you can verify the data format by also opening the file in Excel
+data_hallmann = read.csv("journal.pone.0185809.s004.csv")
+
+# inspect the data
+str(data_hallmann)
+```
+## Process the data
+The data contains measurements of `biomass` in different `year`s for multiple `plot`s. However, the number of days of sampling at each plot is variable - sampling was carried out across different ranges of day numbers (e.g. 1=January 1st, 365=Dec 31st): from `from.daynr` to `to.daynr`. To estimate biomass trends we therefore need to standardize the biomass values to a per-day value.
+
+```{r preprocess_data}
+# create a column for biomass-standardized values
+data_hallmann$biomass.per.day = 
+  data_hallmann$biomass / (data_hallmann$to.daynr - data_hallmann$from.daynr)
+summary(data_hallmann$biomass.per.day)
+```
+
+We can next visualize the trends in biomass over time. We use boxplots because there are multiple plots in each year.
+```{r plot_biomass}
+# set up the plot and define axes (with aes)
+ggplot(data=data_hallmann, aes(x=factor(year), y=biomass.per.day)) +
+# request a boxplot
+  geom_boxplot() +
+# set the overall style of the plot
+  theme_minimal() +
+# rotate the x-axis labels to look nice
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+
+# Questions
+4. Estimate the mean `biomass.per.day` in each year. Hint: if you are getting `NA` values, you may need to tell R to remove them. You can add `, na.rm=TRUE`) to your `tapply` function call to remove the NA values in the data.
+5. Calculate the percent difference in `biomass.per.day` in 2016 compared to 1989.
+6. Interpret the results: is biomass increasing or decreasing over time?
+
+# Optional questions for graduate students
+* Consider also fitting a linear model to the data and checking statistical significance of the trend (use `lm()`), or examining how biomass changes at different times of year (use `mean.daynr`) or across space (use latitude/longitudes in `E` and `N`). Consider correcting for spatial autocorrelation with a generalized least squares model.
+* How do the results of this analysis contrast with or support those in the published Hallmann paper?
+
+# What to hand in
+* A Word Document with:
+    - written answers (1-2 sentences) to each question above
+    - A copy of your R script (the contents of your `.R` file pasted into the Word document)
+    - Author contribution statement
